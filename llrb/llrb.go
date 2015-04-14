@@ -16,6 +16,10 @@
 //
 package llrb
 
+import (
+	"fmt"
+)
+
 // Tree is a Left-Leaning Red-Black (LLRB) implementation of 2-3 trees
 type LLRB struct {
 	count int
@@ -30,8 +34,16 @@ type Node struct {
 	// In the LLRB, new nodes are always red, hence the zero-value for node
 }
 
-func (n *Node) Copy() *Node {
+func (n *Node) Copy(depth int) *Node {
 	ret := *n
+	if depth != 0 {
+		if ret.Left != nil {
+			ret.Left = ret.Left.Copy(depth - 1)
+		}
+		if ret.Right != nil {
+			ret.Right = ret.Right.Copy(depth - 1)
+		}
+	}
 	return &ret
 }
 
@@ -185,7 +197,7 @@ func (t *LLRB) replaceOrInsert(h *Node, item Item) (*Node, Item) {
 		return newNode(item), nil
 	}
 	if t.cow {
-		h = h.Copy()
+		h = h.Copy(1)
 	}
 
 	h = walkDownRot23(h)
@@ -220,7 +232,7 @@ func (t *LLRB) insertNoReplace(h *Node, item Item) *Node {
 		return newNode(item)
 	}
 	if t.cow {
-		h = h.Copy()
+		h = h.Copy(1)
 	}
 
 	h = walkDownRot23(h)
@@ -254,28 +266,6 @@ func walkUpRot23(h *Node) *Node {
 	return h
 }
 
-// Rotation driver routines for 2-3-4 algorithm
-
-func walkDownRot234(h *Node) *Node {
-	if isRed(h.Left) && isRed(h.Right) {
-		flip(h)
-	}
-
-	return h
-}
-
-func walkUpRot234(h *Node) *Node {
-	if isRed(h.Right) && !isRed(h.Left) {
-		h = rotateLeft(h)
-	}
-
-	if isRed(h.Left) && isRed(h.Left.Left) {
-		h = rotateRight(h)
-	}
-
-	return h
-}
-
 // DeleteMin deletes the minimum element in the tree and returns the
 // deleted item or nil otherwise.
 func (t *LLRB) DeleteMin() Item {
@@ -300,7 +290,7 @@ func deleteMin(h *Node, cow bool) (*Node, Item) {
 	}
 
 	if cow {
-		h = h.Copy()
+		h = h.Copy(2)
 	}
 
 	if !isRed(h.Left) && !isRed(h.Left.Left) {
@@ -332,7 +322,7 @@ func deleteMax(h *Node, cow bool) (*Node, Item) {
 		return nil, nil
 	}
 	if cow {
-		h = h.Copy()
+		h = h.Copy(1)
 	}
 	if isRed(h.Left) {
 		h = rotateRight(h)
@@ -373,7 +363,7 @@ func (t *LLRB) delete(h *Node, item Item) (*Node, Item) {
 			return h, nil
 		}
 		if t.cow {
-			h = h.Copy()
+			h = h.Copy(2)
 		}
 		if !isRed(h.Left) && !isRed(h.Left.Left) {
 			h = moveRedLeft(h)
@@ -381,7 +371,7 @@ func (t *LLRB) delete(h *Node, item Item) (*Node, Item) {
 		h.Left, deleted = t.delete(h.Left, item)
 	} else {
 		if t.cow {
-			h = h.Copy()
+			h = h.Copy(1)
 		}
 		if isRed(h.Left) {
 			h = rotateRight(h)
@@ -487,4 +477,16 @@ func fixUp(h *Node) *Node {
 	}
 
 	return h
+}
+
+func (n *Node) String() string {
+	color := ""
+	if !n.Black {
+		color = "+"
+	}
+	if n.Left != nil || n.Right != nil {
+		return fmt.Sprintf("{%s%v %s %s}", color, n.Item, n.Left, n.Right)
+	} else {
+		return fmt.Sprintf("{%s%v}", color, n.Item)
+	}
 }

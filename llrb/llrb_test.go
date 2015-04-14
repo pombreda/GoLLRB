@@ -297,3 +297,79 @@ func TestCoW(t *testing.T) {
 		return true
 	})
 }
+
+type Intp int
+
+func (x *Intp) Less(than Item) bool {
+	return *x < *than.(*Intp)
+}
+
+func TestRandomCoW(t *testing.T) {
+	tree := NewCoW()
+	tree2 := tree.Clone()
+
+	n := 1000
+	nd := 50
+	perm := rand.Perm(n)
+	dels := make(map[*Intp]struct{}, nd)
+
+	test := func(phase string, tree *LLRB) {
+		prev := tree.Min().(*Intp)
+		bottom := 0
+		tree.AscendGreaterOrEqual((*Intp)(&bottom), func(item Item) bool {
+			itm := item.(*Intp)
+			if _, deleted := dels[itm]; !deleted {
+				if *itm < *prev {
+					t.Log(tree.Root())
+					t.Fatalf("%s bad order: %v (expected %v)", phase, itm, prev)
+				}
+			}
+			prev = itm
+			return true
+		})
+	}
+
+	for _, p := range perm {
+		p := p
+		itm := (*Intp)(&p)
+		if rand.Int()%2 == 1 {
+			tree.ReplaceOrInsert(itm)
+			tree2.ReplaceOrInsert(itm)
+		} else {
+			tree2.ReplaceOrInsert(itm)
+			tree.ReplaceOrInsert(itm)
+		}
+		test("insert(1)", tree)
+		test("insert(2)", tree2)
+	}
+	test("insert-final(1)", tree)
+	test("insert-final(2)", tree2)
+
+	toDel := rand.Perm(n)[nd+2:]
+	for _, p := range toDel[nd:] {
+		p := p
+		dels[(*Intp)(&p)] = struct{}{}
+	}
+	for d := range dels {
+		if rand.Int()%2 == 1 {
+			tree.Delete(d)
+			tree2.Delete(d)
+		} else {
+			tree2.Delete(d)
+			tree.Delete(d)
+		}
+		test("delete(1)", tree)
+		test("delete(1)", tree2)
+	}
+	test("delete-final(1)", tree)
+	test("delete-final(2)", tree2)
+
+	td1 := toDel[nd]
+	td2 := toDel[nd+1]
+	if tree.Get((*Intp)(&td1)) != tree2.Get((*Intp)(&td1)) {
+		t.Errorf("item %d not shared between trees", toDel[nd])
+	}
+	if tree.Get((*Intp)(&td2)) != tree2.Get((*Intp)(&td2)) {
+		t.Errorf("item %d not shared between trees", toDel[nd+1])
+	}
+}
