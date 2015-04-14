@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/petar/GoLLRB/llrb"
+	"github.com/luci/GoLLRB/llrb"
 )
 
 func lessInt(a, b interface{}) bool { return a.(int) < b.(int) }
