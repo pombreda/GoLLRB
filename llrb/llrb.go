@@ -47,6 +47,18 @@ func (n *Node) Copy(depth int) *Node {
 	return &ret
 }
 
+func (n *Node) String() string {
+	color := ""
+	if !n.Black {
+		color = "+"
+	}
+	if n.Left != nil || n.Right != nil {
+		return fmt.Sprintf("{%s%v %s %s}", color, n.Item, n.Left, n.Right)
+	} else {
+		return fmt.Sprintf("{%s%v}", color, n.Item)
+	}
+}
+
 type Item interface {
 	Less(than Item) bool
 }
@@ -96,13 +108,26 @@ func New() *LLRB {
 	return &LLRB{}
 }
 
+// NewCoW allocates a new copy-on-write tree.
 func NewCoW() *LLRB {
 	return &LLRB{cow: true}
 }
 
+// Clone duplicates this tree. It only really makes sense for CoW trees.
 func (t *LLRB) Clone() *LLRB {
 	ret := *t
 	return &ret
+}
+
+func (t *LLRB) String() string {
+	name := "LLRB"
+	if t.cow {
+		name = "CoWLLRB"
+	}
+	if t.root == nil {
+		return fmt.Sprintf("%s{}", name)
+	}
+	return fmt.Sprintf("%s%s", name, t.root)
 }
 
 // SetRoot sets the root node of the tree.
@@ -477,16 +502,4 @@ func fixUp(h *Node) *Node {
 	}
 
 	return h
-}
-
-func (n *Node) String() string {
-	color := ""
-	if !n.Black {
-		color = "+"
-	}
-	if n.Left != nil || n.Right != nil {
-		return fmt.Sprintf("{%s%v %s %s}", color, n.Item, n.Left, n.Right)
-	} else {
-		return fmt.Sprintf("{%s%v}", color, n.Item)
-	}
 }
