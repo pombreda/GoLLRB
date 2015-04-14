@@ -3,9 +3,25 @@
 GoLLRB is a Left-Leaning Red-Black (LLRB) implementation of 2-3 balanced binary
 search trees in Go Language.
 
+## Delta from upstream
+(Forked from github.com/petar/GoLLRB)
+
+Can now create a tree with NewCoW(), which returns a copy-on-write LLRB tree.
+The interface is identical, but you can now Clone() the tree and obtain a
+fully read-write duplicate of the tree.
+
+There's a siginifcant performance penalty for writing to cow-enabled trees.
+Every update to the tree requires O(Log N) node copy operations (with a constant
+factor of about 3). It's also likely to make the garbage collector cry.
+
+That said, it's a quick and dirty way to create forkable trees.
+
+Read performance is unaffected, nor is the performance of New()-created LLRB
+trees.
+
 ## Overview
 
-As of this writing and to the best of the author's knowledge, 
+As of this writing and to the best of the author's knowledge,
 Go still does not have a balanced binary search tree (BBST) data structure.
 These data structures are quite useful in a variety of cases. A BBST maintains
 elements in sorted order under dynamic updates (inserts and deletes) and can
@@ -31,7 +47,7 @@ I consider it to be in stable, perhaps even production, shape. There are no know
 With a healthy Go Language installed, simply run `go get github.com/petar/GoLLRB/llrb`
 
 ## Example
-    
+
 	package main
 
 	import (
@@ -61,6 +77,6 @@ With a healthy Go Language installed, simply run `go get github.com/petar/GoLLRB
 
 ## About
 
-GoLLRB was written by [Petar Maymounkov](http://pdos.csail.mit.edu/~petar/). 
+GoLLRB was written by [Petar Maymounkov](http://pdos.csail.mit.edu/~petar/).
 
 Follow me on [Twitter @maymounkov](http://www.twitter.com/maymounkov)!
